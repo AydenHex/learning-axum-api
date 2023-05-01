@@ -3,7 +3,6 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
 use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -11,25 +10,27 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 mod error;
 mod handlers;
 mod models;
+mod settings;
+
+use crate::settings::Settings;
 
 #[tokio::main]
 async fn main() {
-    //Load env var
-    dotenv().ok();
+    let settings = Settings::new().unwrap();
 
     let database_url = format!(
         "postgres://{}:{}@{}:{}/{}",
-        std::env::var("DATABASE_USER").expect("set DATABASE_USER env variable"),
-        std::env::var("DATABASE_PASSWORD").expect("set DATABASE_PASSWORD env variable"),
-        std::env::var("DATABASE_HOST").expect("set DATABASE_HOST env variable"),
-        std::env::var("DATABASE_PORT").expect("set DATABASE_PORT env variable"),
-        std::env::var("DATABASE_NAME").expect("set DATABASE_NAME env variable"),
+        settings.database_user,
+        settings.database_password,
+        settings.database_host,
+        settings.database_port,
+        settings.database_name
     );
 
     // Init tracing
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG").unwrap_or_else(|_| "leaning_axum_api=debug".into()),
+            std::env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
